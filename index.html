@@ -25,24 +25,23 @@
         <button id="btn-mode-stopwatch" class="px-5 py-3 text-lg font-semibold transition-colors bg-zinc-800 hover:bg-zinc-700">Stopwatch</button>
       </div>
     </div>
-    <div id="timer-controls">
-      <div class="mb-2 font-semibold">Duration (min)</div>
-      <div id="duration-buttons" class="grid grid-cols-4 gap-2">
-        <button data-dur="5" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">5</button>
-        <button data-dur="10" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">10</button>
-        <button data-dur="15" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">15</button>
-        <button data-dur="20" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">20</button>
-        <button data-dur="30" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">30</button>
-        <button data-dur="45" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">45</button>
-        <button data-dur="60" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">60</button>
-        <input id="cfg-duration-custom" type="number" min="1" max="120" placeholder="..."
-          class="py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg text-center focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+    <div class="relative">
+      <div id="timer-controls">
+        <div class="mb-2 font-semibold">Duration (min)</div>
+        <div id="duration-buttons" class="grid grid-cols-4 gap-2">
+          <button data-dur="5" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">5</button>
+          <button data-dur="10" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">10</button>
+          <button data-dur="15" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">15</button>
+          <button data-dur="20" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">20</button>
+          <button data-dur="30" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">30</button>
+          <button data-dur="45" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">45</button>
+          <button data-dur="60" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">60</button>
+          <input id="cfg-duration-custom" type="number" min="1" max="120" placeholder="..."
+            class="py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg text-center focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+        </div>
       </div>
-    </div>
-    <div id="stopwatch-controls" class="hidden">
-      <div class="grid grid-cols-2 gap-2">
-        <button id="btn-sw-pause" class="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-lg font-semibold transition-colors active:scale-95">Pause</button>
-        <button id="btn-sw-reset" class="py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">Reset</button>
+      <div id="stopwatch-controls" class="hidden absolute inset-0 flex items-center justify-center">
+        <button id="btn-sw-reset" class="w-full py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">Reset</button>
       </div>
     </div>
     <div class="flex items-center justify-between">
@@ -79,7 +78,6 @@ const btnModeTimer = $("btn-mode-timer");
 const btnModeStopwatch = $("btn-mode-stopwatch");
 const timerControls = $("timer-controls");
 const stopwatchControls = $("stopwatch-controls");
-const btnSwPause = $("btn-sw-pause");
 const btnSwReset = $("btn-sw-reset");
 const cfgMode = $("cfg-mode");
 const cfgDurationCustom = $("cfg-duration-custom");
@@ -96,6 +94,7 @@ let paused = false;
 let endTime = 0;
 let startTime = 0;
 let elapsedAtPause = 0;
+let remainingAtPause = 0;
 let rafId = null;
 let mamboTimeouts = [];
 let selectedDuration = 0;
@@ -183,7 +182,7 @@ function setModeUI(isStopwatch) {
   btnModeStopwatch.classList.toggle("bg-emerald-600", isStopwatch);
   btnModeStopwatch.classList.toggle("bg-zinc-800", !isStopwatch);
   btnModeStopwatch.classList.toggle("hover:bg-zinc-700", !isStopwatch);
-  timerControls.classList.toggle("hidden", isStopwatch);
+  timerControls.classList.toggle("invisible", isStopwatch);
   stopwatchControls.classList.toggle("hidden", !isStopwatch);
 }
 
@@ -216,8 +215,26 @@ function startTimer(durationMin) {
   startBgTick();
 }
 
+function pauseTimer() {
+  if (paused) {
+    endTime = Date.now() + remainingAtPause;
+    running = true;
+    paused = false;
+    scheduleMambos();
+    tickTimer();
+    startBgTick();
+  } else {
+    remainingAtPause = endTime - Date.now();
+    running = false;
+    paused = true;
+    clearMambos();
+    if (rafId) cancelAnimationFrame(rafId);
+  }
+}
+
 function resetTimer() {
   stopCommon();
+  paused = false;
   selectedDuration = 0;
   highlightDuration(0);
   updateDisplay(0);
@@ -259,7 +276,6 @@ function startStopwatch() {
   elapsedAtPause = 0;
   running = true;
   paused = false;
-  btnSwPause.textContent = "Pause";
   scheduleMambosStopwatch();
   tickStopwatch();
   startBgTickStopwatch();
@@ -267,22 +283,18 @@ function startStopwatch() {
 
 function pauseStopwatch() {
   if (paused) {
-    // Resume
     startTime = Date.now() - elapsedAtPause;
     running = true;
     paused = false;
-    btnSwPause.textContent = "Pause";
     scheduleMambosStopwatch();
     tickStopwatch();
     startBgTickStopwatch();
   } else {
-    // Pause
     elapsedAtPause = Date.now() - startTime;
     running = false;
     paused = true;
     clearMambos();
     if (rafId) cancelAnimationFrame(rafId);
-    btnSwPause.textContent = "Resume";
   }
 }
 
@@ -290,7 +302,6 @@ function resetStopwatch() {
   stopCommon();
   elapsedAtPause = 0;
   paused = false;
-  btnSwPause.textContent = "Pause";
   updateDisplay(0);
 }
 
@@ -393,10 +404,14 @@ function finish() {
 
 // --- Event listeners ---
 
-// Display click = reset
+// Display click = pause/unpause
 display.addEventListener("click", () => {
-  if (stopwatchMode) resetStopwatch();
-  else resetTimer();
+  if (stopwatchMode) {
+    if (!running && !paused) startStopwatch();
+    else pauseStopwatch();
+  } else {
+    if (running || paused) pauseTimer();
+  }
 });
 
 // +/- buttons (timer only)
@@ -406,23 +421,43 @@ btnPlus.addEventListener("click", () => adjustTimer(1));
 // Mode toggle
 btnModeTimer.addEventListener("click", () => {
   if (!stopwatchMode) return;
+  const elapsedMs = running ? Date.now() - startTime : elapsedAtPause;
   stopCommon();
   setModeUI(false);
-  resetTimer();
+  if (elapsedMs > 0) {
+    const mins = elapsedMs / 60000;
+    selectedDuration = mins;
+    highlightDuration(0);
+    endTime = Date.now() + elapsedMs;
+    running = true;
+    paused = false;
+    scheduleMambos();
+    tickTimer();
+    startBgTick();
+  } else {
+    resetTimer();
+  }
 });
 
 btnModeStopwatch.addEventListener("click", () => {
   if (stopwatchMode) return;
+  const remainMs = running ? endTime - Date.now() : 0;
   stopCommon();
   setModeUI(true);
-  startStopwatch();
+  if (remainMs > 0) {
+    startTime = Date.now() - remainMs;
+    elapsedAtPause = 0;
+    running = true;
+    paused = false;
+    scheduleMambosStopwatch();
+    tickStopwatch();
+    startBgTickStopwatch();
+  } else {
+    startStopwatch();
+  }
 });
 
-// Stopwatch controls
-btnSwPause.addEventListener("click", () => {
-  if (!running && !paused) startStopwatch();
-  else pauseStopwatch();
-});
+// Stopwatch reset
 btnSwReset.addEventListener("click", resetStopwatch);
 
 // Duration buttons
