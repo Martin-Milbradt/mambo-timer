@@ -11,43 +11,60 @@
 
   <h1 class="text-2xl font-bold mb-8 tracking-tight">Mambo Timer</h1>
 
-  <div id="display" class="text-8xl font-bold tabular-nums mb-8 select-none">25:00</div>
-
-  <div class="flex gap-4 mb-10">
-    <button id="btn-start" class="px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-lg font-semibold transition-colors">Start</button>
-    <button id="btn-reset" class="px-6 py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors">Reset</button>
+  <div class="flex items-center gap-4 mb-10">
+    <button id="btn-minus" class="px-5 py-4 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-3xl font-bold transition-colors active:scale-95 select-none">&minus;</button>
+    <div id="display" class="text-8xl font-bold tabular-nums select-none cursor-pointer">10:00</div>
+    <button id="btn-plus" class="px-5 py-4 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-3xl font-bold transition-colors active:scale-95 select-none">+</button>
   </div>
 
-  <div class="w-full max-w-xs space-y-4 text-sm">
-    <label class="flex items-center justify-between">
-      <span>Duration (min)</span>
-      <input id="cfg-duration" type="number" min="1" max="120" value="25"
-        class="w-20 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-right focus:outline-none focus:border-emerald-500">
-    </label>
-    <label class="flex items-center justify-between">
-      <span>Mambo mode</span>
+  <div class="w-full max-w-sm space-y-5 text-base">
+    <div>
+      <div class="mb-2 font-semibold">Duration (min)</div>
+      <div id="duration-buttons" class="grid grid-cols-4 gap-2">
+        <button data-dur="5" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">5</button>
+        <button data-dur="10" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">10</button>
+        <button data-dur="15" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">15</button>
+        <button data-dur="20" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">20</button>
+        <button data-dur="30" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">30</button>
+        <button data-dur="45" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">45</button>
+        <button data-dur="60" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">60</button>
+        <input id="cfg-duration-custom" type="number" min="1" max="120" placeholder="..."
+          class="py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg text-center focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+      </div>
+    </div>
+    <div class="flex items-center justify-between">
+      <span class="font-semibold">Mambo mode</span>
       <select id="cfg-mode"
-        class="bg-zinc-800 border border-zinc-600 rounded px-2 py-1 focus:outline-none focus:border-emerald-500">
+        class="px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg focus:outline-none focus:border-emerald-500">
         <option value="off">Off</option>
         <option value="uniform">Uniform</option>
         <option value="random" selected>Random</option>
       </select>
-    </label>
-    <label id="interval-row" class="flex items-center justify-between">
-      <span>Interval (sec)</span>
-      <input id="cfg-interval" type="number" min="10" max="600" value="240"
-        class="w-20 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-right focus:outline-none focus:border-emerald-500">
-    </label>
+    </div>
+    <div id="interval-row">
+      <div class="mb-2 font-semibold">Interval (sec)</div>
+      <div id="interval-buttons" class="grid grid-cols-4 gap-2">
+        <button data-int="10" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">10</button>
+        <button data-int="30" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">30</button>
+        <button data-int="60" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">60</button>
+        <button data-int="120" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">120</button>
+        <button data-int="240" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">240</button>
+        <button data-int="300" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">300</button>
+        <button data-int="600" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">600</button>
+        <input id="cfg-interval-custom" type="number" min="10" max="600" placeholder="..."
+          class="py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg text-center focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+      </div>
+    </div>
   </div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const display = $("display");
-const btnStart = $("btn-start");
-const btnReset = $("btn-reset");
-const cfgDuration = $("cfg-duration");
+const btnMinus = $("btn-minus");
+const btnPlus = $("btn-plus");
 const cfgMode = $("cfg-mode");
-const cfgInterval = $("cfg-interval");
+const cfgDurationCustom = $("cfg-duration-custom");
+const cfgIntervalCustom = $("cfg-interval-custom");
 const intervalRow = $("interval-row");
 
 const STORAGE_KEY = "mambo-timer-settings";
@@ -57,28 +74,36 @@ const audioLong = new Audio("public/full_mambo.mp3");
 
 let running = false;
 let endTime = 0;
-let remainingMs = 0;
 let rafId = null;
 let mamboTimeouts = [];
+let selectedDuration = 0;
+let selectedInterval = 60;
+let audioUnlocked = false;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioShort.play().then(() => audioShort.pause()).catch(() => {});
+  audioLong.play().then(() => audioLong.pause()).catch(() => {});
+  audioUnlocked = true;
+}
 
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (s) {
-      cfgDuration.value = s.duration ?? 25;
       cfgMode.value = s.mode ?? "random";
-      cfgInterval.value = s.interval ?? 240;
+      selectedInterval = s.interval ?? 60;
     }
   } catch { /* ignore */ }
+  highlightInterval(selectedInterval);
   updateIntervalVisibility();
-  resetTimer();
+  startTimer(10);
 }
 
 function saveSettings() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    duration: Number(cfgDuration.value),
     mode: cfgMode.value,
-    interval: Number(cfgInterval.value),
+    interval: selectedInterval,
   }));
 }
 
@@ -94,13 +119,42 @@ function updateDisplay(ms) {
 }
 
 function updateIntervalVisibility() {
-  intervalRow.style.display = cfgMode.value === "off" ? "none" : "flex";
+  intervalRow.style.display = cfgMode.value === "off" ? "none" : "";
+}
+
+function highlightDuration(val) {
+  document.querySelectorAll(".dur-btn").forEach(b => {
+    const active = Number(b.dataset.dur) === val;
+    b.classList.toggle("bg-emerald-600", active);
+    b.classList.toggle("hover:bg-emerald-500", active);
+    b.classList.toggle("bg-zinc-700", !active);
+    b.classList.toggle("hover:bg-zinc-600", !active);
+  });
+  if (![5, 10, 15, 20, 30, 45, 60].includes(val)) {
+    cfgDurationCustom.value = val;
+  } else {
+    cfgDurationCustom.value = "";
+  }
+}
+
+function highlightInterval(val) {
+  document.querySelectorAll(".int-btn").forEach(b => {
+    const active = Number(b.dataset.int) === val;
+    b.classList.toggle("bg-emerald-600", active);
+    b.classList.toggle("hover:bg-emerald-500", active);
+    b.classList.toggle("bg-zinc-700", !active);
+    b.classList.toggle("hover:bg-zinc-600", !active);
+  });
+  if (![10, 30, 60, 120, 240, 300, 600].includes(val)) {
+    cfgIntervalCustom.value = val;
+  } else {
+    cfgIntervalCustom.value = "";
+  }
 }
 
 function tick() {
   if (!running) return;
-  const now = Date.now();
-  const left = endTime - now;
+  const left = endTime - Date.now();
   if (left <= 0) {
     updateDisplay(0);
     finish();
@@ -120,7 +174,7 @@ function scheduleMambos() {
   const mode = cfgMode.value;
   if (mode === "off") return;
 
-  const intervalSec = Number(cfgInterval.value);
+  const intervalSec = selectedInterval;
   const totalMs = endTime - Date.now();
 
   if (mode === "uniform") {
@@ -149,77 +203,103 @@ function clearMambos() {
 
 function finish() {
   running = false;
-  btnStart.textContent = "Start";
   clearMambos();
   if (rafId) cancelAnimationFrame(rafId);
   audioLong.currentTime = 0;
   audioLong.play().catch(() => {});
-  setConfigDisabled(false);
+}
+
+function startTimer(durationMin) {
+  unlockAudio();
+  selectedDuration = durationMin;
+  highlightDuration(durationMin);
+  saveSettings();
+
+  clearMambos();
+  if (rafId) cancelAnimationFrame(rafId);
+
+  endTime = Date.now() + durationMin * 60 * 1000;
+  running = true;
+  scheduleMambos();
+  tick();
+
+  // Backup tick for background tabs
+  setTimeout(function bgTick() {
+    if (!running) return;
+    const left = endTime - Date.now();
+    if (left <= 0) { updateDisplay(0); finish(); return; }
+    updateDisplay(left);
+    setTimeout(bgTick, 1000);
+  }, 1000);
 }
 
 function resetTimer() {
   running = false;
-  btnStart.textContent = "Start";
   clearMambos();
   if (rafId) cancelAnimationFrame(rafId);
-  remainingMs = Number(cfgDuration.value) * 60 * 1000;
-  updateDisplay(remainingMs);
-  setConfigDisabled(false);
+  selectedDuration = 0;
+  highlightDuration(0);
+  updateDisplay(0);
 }
 
-function setConfigDisabled(disabled) {
-  cfgDuration.disabled = disabled;
-  cfgMode.disabled = disabled;
-  cfgInterval.disabled = disabled;
-}
-
-btnStart.addEventListener("click", () => {
-  // Unlock audio on first user gesture
-  audioShort.play().then(() => audioShort.pause()).catch(() => {});
-  audioLong.play().then(() => audioLong.pause()).catch(() => {});
-
-  if (running) {
-    // Pause
-    running = false;
-    btnStart.textContent = "Start";
-    remainingMs = endTime - Date.now();
-    clearMambos();
-    if (rafId) cancelAnimationFrame(rafId);
-    setConfigDisabled(false);
+function adjustTimer(deltaMin) {
+  unlockAudio();
+  if (!running) return;
+  endTime += deltaMin * 60 * 1000;
+  // Don't let it go below 1 second from now
+  if (endTime <= Date.now()) {
+    updateDisplay(0);
+    finish();
   } else {
-    // Start / Resume
-    saveSettings();
-    if (remainingMs <= 0) remainingMs = Number(cfgDuration.value) * 60 * 1000;
-    endTime = Date.now() + remainingMs;
-    running = true;
-    btnStart.textContent = "Pause";
-    setConfigDisabled(true);
     scheduleMambos();
-    tick();
-    // Backup tick for when tab is in background
-    setTimeout(function bgTick() {
-      if (!running) return;
-      const left = endTime - Date.now();
-      if (left <= 0) { updateDisplay(0); finish(); return; }
-      updateDisplay(left);
-      setTimeout(bgTick, 1000);
-    }, 1000);
+  }
+}
+
+// Display click = reset
+display.addEventListener("click", resetTimer);
+
+// +/- buttons
+btnMinus.addEventListener("click", () => adjustTimer(-1));
+btnPlus.addEventListener("click", () => adjustTimer(1));
+
+// Duration buttons
+document.querySelectorAll(".dur-btn").forEach(btn => {
+  btn.addEventListener("click", () => startTimer(Number(btn.dataset.dur)));
+});
+
+cfgDurationCustom.addEventListener("change", () => {
+  const val = Number(cfgDurationCustom.value);
+  if (val > 0) startTimer(val);
+});
+
+// Interval buttons
+document.querySelectorAll(".int-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    unlockAudio();
+    selectedInterval = Number(btn.dataset.int);
+    highlightInterval(selectedInterval);
+    saveSettings();
+    if (running) scheduleMambos();
+  });
+});
+
+cfgIntervalCustom.addEventListener("change", () => {
+  const val = Number(cfgIntervalCustom.value);
+  if (val > 0) {
+    unlockAudio();
+    selectedInterval = val;
+    highlightInterval(val);
+    saveSettings();
+    if (running) scheduleMambos();
   }
 });
 
-btnReset.addEventListener("click", resetTimer);
-
-cfgDuration.addEventListener("change", () => {
-  saveSettings();
-  if (!running) resetTimer();
-});
-
+// Mode change reschedules live
 cfgMode.addEventListener("change", () => {
   saveSettings();
   updateIntervalVisibility();
+  if (running) scheduleMambos();
 });
-
-cfgInterval.addEventListener("change", saveSettings);
 
 loadSettings();
 </script>
