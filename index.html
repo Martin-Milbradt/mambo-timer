@@ -185,8 +185,6 @@ function setModeUI(isStopwatch) {
   btnModeStopwatch.classList.toggle("hover:bg-zinc-700", !isStopwatch);
   timerControls.classList.toggle("hidden", isStopwatch);
   stopwatchControls.classList.toggle("hidden", !isStopwatch);
-  btnMinus.classList.toggle("hidden", isStopwatch);
-  btnPlus.classList.toggle("hidden", isStopwatch);
 }
 
 // --- Timer mode ---
@@ -228,12 +226,20 @@ function resetTimer() {
 function adjustTimer(deltaMin) {
   unlockAudio();
   if (!running) return;
-  endTime += deltaMin * 60 * 1000;
-  if (endTime <= Date.now()) {
-    updateDisplay(0);
-    finish();
+  if (stopwatchMode) {
+    // Shift start time back (+) or forward (-) to add/remove elapsed time
+    startTime -= deltaMin * 60 * 1000;
+    // Don't let elapsed go negative
+    if (startTime > Date.now()) startTime = Date.now();
+    scheduleMambosStopwatch();
   } else {
-    scheduleMambos();
+    endTime += deltaMin * 60 * 1000;
+    if (endTime <= Date.now()) {
+      updateDisplay(0);
+      finish();
+    } else {
+      scheduleMambos();
+    }
   }
 }
 
