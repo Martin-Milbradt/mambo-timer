@@ -4,67 +4,115 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mambo Timer</title>
+  <link rel="icon" type="image/png" href="public/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { theme: { extend: { fontFamily: { mono: ['"JetBrains Mono"', 'monospace'] } } } }</script>
-</head>
-<body class="bg-zinc-900 text-zinc-100 min-h-screen flex flex-col items-center justify-center p-4 font-mono">
+  <script>tailwind.config = { theme: { extend: {
+    fontFamily: { sans: ['"ロダンわんぱく Pro EB"', 'Fredoka', 'sans-serif'] },
+    colors: {
+      mt: {
+        blue: '#4A5587', 'blue-light': '#5C6A9E', 'blue-dark': '#3A4470',
+        red: '#B5463A', 'red-light': '#C8574A', 'red-dark': '#9A3A30',
+        brown: '#8B6B52', 'brown-light': '#A0826B', 'brown-dark': '#5C3D2E',
+        cream: '#FFF8F0',
+      },
+    },
+  } } }</script>
+  <style>
+    /* Mode toggle: active/inactive via parent data-mode */
+    .mode-btn { transition: background-color 0.15s, color 0.15s; }
+    [data-mode="timer"] .mode-btn-timer,
+    [data-mode="stopwatch"] .mode-btn-sw { background: #4A5587; color: white; }
+    [data-mode="stopwatch"] .mode-btn-timer,
+    [data-mode="timer"] .mode-btn-sw { background: rgba(181,70,58,0.15); color: #B5463A; }
+    [data-mode="stopwatch"] .mode-btn-timer:hover,
+    [data-mode="timer"] .mode-btn-sw:hover { background: rgba(181,70,58,0.25); }
 
-  <h1 class="text-2xl font-bold mb-8 tracking-tight">Mambo Timer</h1>
+    /* Panel crossfade */
+    .panel { transition: opacity 0.15s ease; }
+    [data-mode="timer"] .panel-timer { opacity: 1; pointer-events: auto; }
+    [data-mode="timer"] .panel-sw { opacity: 0; pointer-events: none; }
+    [data-mode="stopwatch"] .panel-timer { opacity: 0; pointer-events: none; }
+    [data-mode="stopwatch"] .panel-sw { opacity: 1; pointer-events: auto; }
+
+    /* Duration buttons: active via data-active */
+    .dur-btn { background: rgba(74,85,135,0.15); color: #4A5587; transition: background-color 0.15s, color 0.15s, transform 0.1s; }
+    .dur-btn:hover { background: rgba(74,85,135,0.25); }
+    .dur-btn[data-active] { background: #4A5587; color: white; }
+    .dur-btn[data-active]:hover { background: #5C6A9E; }
+
+    /* Interval buttons: active via data-active */
+    .int-btn { background: rgba(181,70,58,0.15); color: #B5463A; transition: background-color 0.15s, color 0.15s, transform 0.1s; }
+    .int-btn:hover { background: rgba(181,70,58,0.25); }
+    .int-btn[data-active] { background: #B5463A; color: white; }
+    .int-btn[data-active]:hover { background: #C8574A; }
+
+    /* Fixed-width digits for non-monospace font */
+    .digit { width: 0.58em; }
+  </style>
+</head>
+<body class="bg-mt-cream text-mt-brown-dark min-h-screen flex flex-col items-center justify-center p-4">
+
+  <h1 class="text-4xl font-bold mb-8 text-mt-blue">Mambo Timer</h1>
 
   <div class="flex items-center gap-4 mb-10">
-    <button id="btn-minus" class="px-5 py-4 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-3xl font-bold transition-colors active:scale-95 select-none">&minus;</button>
-    <div id="display" class="text-8xl font-bold tabular-nums select-none cursor-pointer">10:00</div>
-    <button id="btn-plus" class="px-5 py-4 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-3xl font-bold transition-colors active:scale-95 select-none">+</button>
+    <button id="btn-minus" class="px-5 py-4 rounded-2xl bg-mt-red text-white text-3xl font-bold transition-all active:scale-90 select-none shadow-md hover:shadow-lg hover:bg-mt-red-light">&minus;</button>
+    <div id="display" class="text-8xl font-bold select-none cursor-pointer text-mt-brown-dark flex justify-center">
+      <span class="digit inline-block text-center">1</span><span class="digit inline-block text-center">0</span><span class="inline-block text-center w-[0.3em]">:</span><span class="digit inline-block text-center">0</span><span class="digit inline-block text-center">0</span>
+    </div>
+    <button id="btn-plus" class="px-5 py-4 rounded-2xl bg-mt-red text-white text-3xl font-bold transition-all active:scale-90 select-none shadow-md hover:shadow-lg hover:bg-mt-red-light">+</button>
   </div>
 
-  <div class="w-full max-w-sm space-y-5 text-base">
+  <div id="controls" data-mode="timer" class="w-full max-w-sm space-y-6">
     <div class="flex items-center justify-between">
-      <span class="font-semibold">Mode</span>
-      <div class="flex rounded-xl overflow-hidden border border-zinc-600">
-        <button id="btn-mode-timer" class="px-5 py-3 text-lg font-semibold transition-colors bg-emerald-600">Timer</button>
-        <button id="btn-mode-stopwatch" class="px-5 py-3 text-lg font-semibold transition-colors bg-zinc-800 hover:bg-zinc-700">Stopwatch</button>
+      <span class="text-xl font-semibold text-mt-brown">Mode</span>
+      <div class="flex rounded-2xl overflow-hidden shadow-md">
+        <button id="btn-mode-timer" class="mode-btn mode-btn-timer px-6 py-3 text-lg font-semibold">Timer</button>
+        <button id="btn-mode-stopwatch" class="mode-btn mode-btn-sw px-6 py-3 text-lg font-semibold">Stopwatch</button>
       </div>
     </div>
     <div class="relative">
-      <div id="timer-controls">
-        <div class="mb-2 font-semibold">Duration (min)</div>
-        <div id="duration-buttons" class="grid grid-cols-4 gap-2">
-          <button data-dur="5" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">5</button>
-          <button data-dur="10" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">10</button>
-          <button data-dur="15" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">15</button>
-          <button data-dur="20" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">20</button>
-          <button data-dur="30" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">30</button>
-          <button data-dur="45" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">45</button>
-          <button data-dur="60" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">60</button>
+      <div id="timer-controls" class="panel panel-timer">
+        <div class="mb-2 text-xl font-semibold text-mt-brown">Duration (min)</div>
+        <div class="grid grid-cols-4 gap-2">
+          <button data-dur="5" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">5</button>
+          <button data-dur="10" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">10</button>
+          <button data-dur="15" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">15</button>
+          <button data-dur="20" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">20</button>
+          <button data-dur="30" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">30</button>
+          <button data-dur="45" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">45</button>
+          <button data-dur="60" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">60</button>
           <input id="cfg-duration-custom" type="number" min="1" max="120" placeholder="..."
-            class="py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg text-center focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+            class="py-3 rounded-2xl bg-[rgba(74,85,135,0.1)] border-2 border-[rgba(74,85,135,0.2)] text-mt-blue text-lg text-center font-semibold focus:outline-none focus:border-mt-blue [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
         </div>
       </div>
-      <div id="stopwatch-controls" class="hidden absolute inset-0 flex items-center justify-center">
-        <button id="btn-sw-reset" class="w-full py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">Reset</button>
+      <div id="stopwatch-controls" class="panel panel-sw absolute inset-0 flex items-center justify-center">
+        <button id="btn-sw-reset" class="w-full py-3 rounded-2xl bg-mt-red hover:bg-mt-red-light text-white text-lg font-semibold transition-all active:scale-90 shadow-md">Reset</button>
       </div>
     </div>
     <div class="flex items-center justify-between">
-      <span class="font-semibold">Mambo mode</span>
+      <span class="text-xl font-semibold text-mt-brown">Mambo mode</span>
       <select id="cfg-mode"
-        class="px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg focus:outline-none focus:border-emerald-500">
+        class="px-4 py-3 rounded-2xl bg-[rgba(181,70,58,0.15)] border-2 border-[rgba(181,70,58,0.2)] text-mt-red text-lg font-semibold focus:outline-none focus:border-mt-red">
         <option value="off">Off</option>
         <option value="uniform">Uniform</option>
         <option value="random" selected>Random</option>
       </select>
     </div>
     <div id="interval-row">
-      <div class="mb-2 font-semibold">Interval (sec)</div>
-      <div id="interval-buttons" class="grid grid-cols-4 gap-2">
-        <button data-int="10" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">10</button>
-        <button data-int="30" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">30</button>
-        <button data-int="60" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">60</button>
-        <button data-int="120" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">120</button>
-        <button data-int="240" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">240</button>
-        <button data-int="300" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">300</button>
-        <button data-int="600" class="int-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">600</button>
+      <div class="mb-2 text-xl font-semibold text-mt-brown">Interval (sec)</div>
+      <div class="grid grid-cols-4 gap-2">
+        <button data-int="10" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">10</button>
+        <button data-int="30" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">30</button>
+        <button data-int="60" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">60</button>
+        <button data-int="120" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">120</button>
+        <button data-int="240" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">240</button>
+        <button data-int="300" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">300</button>
+        <button data-int="600" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">600</button>
         <input id="cfg-interval-custom" type="number" min="10" max="600" placeholder="..."
-          class="py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg text-center focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+          class="py-3 rounded-2xl bg-[rgba(181,70,58,0.1)] border-2 border-[rgba(181,70,58,0.2)] text-mt-red text-lg text-center font-semibold focus:outline-none focus:border-mt-red [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
       </div>
     </div>
   </div>
@@ -72,12 +120,11 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const display = $("display");
+const controls = $("controls");
 const btnMinus = $("btn-minus");
 const btnPlus = $("btn-plus");
 const btnModeTimer = $("btn-mode-timer");
 const btnModeStopwatch = $("btn-mode-stopwatch");
-const timerControls = $("timer-controls");
-const stopwatchControls = $("stopwatch-controls");
 const btnSwReset = $("btn-sw-reset");
 const cfgMode = $("cfg-mode");
 const cfgDurationCustom = $("cfg-duration-custom");
@@ -136,8 +183,14 @@ function formatTime(ms) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+const digitSpans = display.querySelectorAll(".digit");
+
 function updateDisplay(ms) {
-  display.textContent = formatTime(ms);
+  const str = formatTime(ms);
+  digitSpans[0].textContent = str[0];
+  digitSpans[1].textContent = str[1];
+  digitSpans[2].textContent = str[3];
+  digitSpans[3].textContent = str[4];
 }
 
 function updateIntervalVisibility() {
@@ -146,11 +199,8 @@ function updateIntervalVisibility() {
 
 function highlightDuration(val) {
   document.querySelectorAll(".dur-btn").forEach(b => {
-    const active = Number(b.dataset.dur) === val;
-    b.classList.toggle("bg-emerald-600", active);
-    b.classList.toggle("hover:bg-emerald-500", active);
-    b.classList.toggle("bg-zinc-700", !active);
-    b.classList.toggle("hover:bg-zinc-600", !active);
+    if (Number(b.dataset.dur) === val) b.setAttribute("data-active", "");
+    else b.removeAttribute("data-active");
   });
   if (![5, 10, 15, 20, 30, 45, 60].includes(val)) {
     cfgDurationCustom.value = val;
@@ -161,11 +211,8 @@ function highlightDuration(val) {
 
 function highlightInterval(val) {
   document.querySelectorAll(".int-btn").forEach(b => {
-    const active = Number(b.dataset.int) === val;
-    b.classList.toggle("bg-emerald-600", active);
-    b.classList.toggle("hover:bg-emerald-500", active);
-    b.classList.toggle("bg-zinc-700", !active);
-    b.classList.toggle("hover:bg-zinc-600", !active);
+    if (Number(b.dataset.int) === val) b.setAttribute("data-active", "");
+    else b.removeAttribute("data-active");
   });
   if (![10, 30, 60, 120, 240, 300, 600].includes(val)) {
     cfgIntervalCustom.value = val;
@@ -176,14 +223,7 @@ function highlightInterval(val) {
 
 function setModeUI(isStopwatch) {
   stopwatchMode = isStopwatch;
-  btnModeTimer.classList.toggle("bg-emerald-600", !isStopwatch);
-  btnModeTimer.classList.toggle("bg-zinc-800", isStopwatch);
-  btnModeTimer.classList.toggle("hover:bg-zinc-700", isStopwatch);
-  btnModeStopwatch.classList.toggle("bg-emerald-600", isStopwatch);
-  btnModeStopwatch.classList.toggle("bg-zinc-800", !isStopwatch);
-  btnModeStopwatch.classList.toggle("hover:bg-zinc-700", !isStopwatch);
-  timerControls.classList.toggle("invisible", isStopwatch);
-  stopwatchControls.classList.toggle("hidden", !isStopwatch);
+  controls.dataset.mode = isStopwatch ? "stopwatch" : "timer";
 }
 
 // --- Timer mode ---
@@ -244,9 +284,7 @@ function adjustTimer(deltaMin) {
   unlockAudio();
   if (!running) return;
   if (stopwatchMode) {
-    // Shift start time back (+) or forward (-) to add/remove elapsed time
     startTime -= deltaMin * 60 * 1000;
-    // Don't let elapsed go negative
     if (startTime > Date.now()) startTime = Date.now();
     scheduleMambosStopwatch();
   } else {
@@ -367,9 +405,8 @@ function scheduleMambosStopwatch() {
   const mode = cfgMode.value;
   if (mode === "off") return;
 
-  // Schedule a batch, then re-schedule when batch runs out
   const intervalSec = selectedInterval;
-  const batchDuration = 3600 * 1000; // 1 hour batch
+  const batchDuration = 3600 * 1000;
 
   if (mode === "uniform") {
     const intervalMs = intervalSec * 1000;
@@ -404,7 +441,6 @@ function finish() {
 
 // --- Event listeners ---
 
-// Display click = pause/unpause
 display.addEventListener("click", () => {
   if (stopwatchMode) {
     if (!running && !paused) startStopwatch();
@@ -414,19 +450,16 @@ display.addEventListener("click", () => {
   }
 });
 
-// +/- buttons (timer only)
 btnMinus.addEventListener("click", () => adjustTimer(-1));
 btnPlus.addEventListener("click", () => adjustTimer(1));
 
-// Mode toggle
 btnModeTimer.addEventListener("click", () => {
   if (!stopwatchMode) return;
   const elapsedMs = running ? Date.now() - startTime : elapsedAtPause;
   stopCommon();
   setModeUI(false);
   if (elapsedMs > 0) {
-    const mins = elapsedMs / 60000;
-    selectedDuration = mins;
+    selectedDuration = elapsedMs / 60000;
     highlightDuration(0);
     endTime = Date.now() + elapsedMs;
     running = true;
@@ -457,10 +490,8 @@ btnModeStopwatch.addEventListener("click", () => {
   }
 });
 
-// Stopwatch reset
 btnSwReset.addEventListener("click", resetStopwatch);
 
-// Duration buttons
 document.querySelectorAll(".dur-btn").forEach(btn => {
   btn.addEventListener("click", () => startTimer(Number(btn.dataset.dur)));
 });
@@ -470,7 +501,6 @@ cfgDurationCustom.addEventListener("change", () => {
   if (val > 0) startTimer(val);
 });
 
-// Interval buttons
 document.querySelectorAll(".int-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     unlockAudio();
@@ -498,7 +528,6 @@ cfgIntervalCustom.addEventListener("change", () => {
   }
 });
 
-// Mambo mode change reschedules live
 cfgMode.addEventListener("change", () => {
   saveSettings();
   updateIntervalVisibility();
