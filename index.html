@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1A1210">
   <title>Mambo Timer</title>
   <link rel="icon" type="image/png" href="public/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,22 +14,23 @@
     fontFamily: { sans: ['"ロダンわんぱく Pro EB"', 'Fredoka', 'sans-serif'] },
     colors: {
       mt: {
-        blue: '#4A5587', 'blue-light': '#5C6A9E', 'blue-dark': '#3A4470',
-        red: '#B5463A', 'red-light': '#C8574A', 'red-dark': '#9A3A30',
-        brown: '#8B6B52', 'brown-light': '#A0826B', 'brown-dark': '#5C3D2E',
+        blue: '#6B7FBF', 'blue-light': '#8494D0', 'blue-dark': '#4A5587',
+        red: '#D4645A', 'red-light': '#E07A71', 'red-dark': '#B5463A',
+        brown: '#A0826B', 'brown-light': '#C4A88E', 'brown-dark': '#5C3D2E',
         cream: '#FFF8F0',
+        bg: '#1A1210', 'bg-light': '#2A201C',
       },
     },
   } } }</script>
   <style>
-    /* Mode toggle: active/inactive via parent data-mode */
+    /* Mode toggle */
     .mode-btn { transition: background-color 0.15s, color 0.15s; }
     [data-mode="timer"] .mode-btn-timer,
-    [data-mode="stopwatch"] .mode-btn-sw { background: #4A5587; color: white; }
+    [data-mode="stopwatch"] .mode-btn-sw { background: #6B7FBF; color: #1A1210; }
     [data-mode="stopwatch"] .mode-btn-timer,
-    [data-mode="timer"] .mode-btn-sw { background: rgba(181,70,58,0.15); color: #B5463A; }
+    [data-mode="timer"] .mode-btn-sw { background: rgba(212,100,90,0.2); color: #D4645A; }
     [data-mode="stopwatch"] .mode-btn-timer:hover,
-    [data-mode="timer"] .mode-btn-sw:hover { background: rgba(181,70,58,0.25); }
+    [data-mode="timer"] .mode-btn-sw:hover { background: rgba(212,100,90,0.3); }
 
     /* Panel crossfade */
     .panel { transition: opacity 0.15s ease; }
@@ -37,32 +39,32 @@
     [data-mode="stopwatch"] .panel-timer { opacity: 0; pointer-events: none; }
     [data-mode="stopwatch"] .panel-sw { opacity: 1; pointer-events: auto; }
 
-    /* Duration buttons: active via data-active */
-    .dur-btn { background: rgba(74,85,135,0.15); color: #4A5587; transition: background-color 0.15s, color 0.15s, transform 0.1s; }
-    .dur-btn:hover { background: rgba(74,85,135,0.25); }
-    .dur-btn[data-active] { background: #4A5587; color: white; }
-    .dur-btn[data-active]:hover { background: #5C6A9E; }
+    /* Duration buttons */
+    .dur-btn { background: rgba(107,127,191,0.2); color: #8494D0; transition: background-color 0.15s, color 0.15s, transform 0.1s; }
+    .dur-btn:hover { background: rgba(107,127,191,0.3); }
+    .dur-btn[data-active] { background: #6B7FBF; color: #1A1210; }
+    .dur-btn[data-active]:hover { background: #8494D0; }
 
-    /* Interval buttons: active via data-active */
-    .int-btn { background: rgba(181,70,58,0.15); color: #B5463A; transition: background-color 0.15s, color 0.15s, transform 0.1s; }
-    .int-btn:hover { background: rgba(181,70,58,0.25); }
-    .int-btn[data-active] { background: #B5463A; color: white; }
-    .int-btn[data-active]:hover { background: #C8574A; }
+    /* Interval buttons */
+    .int-btn { background: rgba(212,100,90,0.2); color: #E07A71; transition: background-color 0.15s, color 0.15s, transform 0.1s; }
+    .int-btn:hover { background: rgba(212,100,90,0.3); }
+    .int-btn[data-active] { background: #D4645A; color: #1A1210; }
+    .int-btn[data-active]:hover { background: #E07A71; }
 
-    /* Fixed-width digits for non-monospace font */
+    /* Fixed-width digits */
     .digit { width: 0.58em; }
   </style>
 </head>
-<body class="bg-mt-cream text-mt-brown-dark min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-mt-bg text-mt-cream min-h-screen flex flex-col items-center justify-center p-4">
 
   <h1 class="text-4xl font-bold mb-8 text-mt-blue">Mambo Timer</h1>
 
   <div class="flex items-center gap-4 mb-10">
-    <button id="btn-minus" class="px-5 py-4 rounded-2xl bg-mt-red text-white text-3xl font-bold transition-all active:scale-90 select-none shadow-md hover:shadow-lg hover:bg-mt-red-light">&minus;</button>
-    <div id="display" class="text-8xl font-bold select-none cursor-pointer text-mt-brown-dark flex justify-center">
+    <button id="btn-minus" class="px-5 py-4 rounded-2xl bg-mt-red text-mt-bg text-3xl font-bold transition-all active:scale-90 select-none shadow-md hover:shadow-lg hover:bg-mt-red-light">&minus;</button>
+    <div id="display" class="text-8xl font-bold select-none cursor-pointer text-mt-cream flex justify-center">
       <span class="digit inline-block text-center">1</span><span class="digit inline-block text-center">0</span><span class="inline-block text-center w-[0.3em]">:</span><span class="digit inline-block text-center">0</span><span class="digit inline-block text-center">0</span>
     </div>
-    <button id="btn-plus" class="px-5 py-4 rounded-2xl bg-mt-red text-white text-3xl font-bold transition-all active:scale-90 select-none shadow-md hover:shadow-lg hover:bg-mt-red-light">+</button>
+    <button id="btn-plus" class="px-5 py-4 rounded-2xl bg-mt-red text-mt-bg text-3xl font-bold transition-all active:scale-90 select-none shadow-md hover:shadow-lg hover:bg-mt-red-light">+</button>
   </div>
 
   <div id="controls" data-mode="timer" class="w-full max-w-sm space-y-6">
@@ -85,17 +87,17 @@
           <button data-dur="45" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">45</button>
           <button data-dur="60" class="dur-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">60</button>
           <input id="cfg-duration-custom" type="number" min="1" max="120" placeholder="..."
-            class="py-3 rounded-2xl bg-[rgba(74,85,135,0.1)] border-2 border-[rgba(74,85,135,0.2)] text-mt-blue text-lg text-center font-semibold focus:outline-none focus:border-mt-blue [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+            class="py-3 rounded-2xl bg-[rgba(107,127,191,0.15)] border-2 border-[rgba(107,127,191,0.25)] text-mt-blue text-lg text-center font-semibold focus:outline-none focus:border-mt-blue [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
         </div>
       </div>
       <div id="stopwatch-controls" class="panel panel-sw absolute inset-0 flex items-center justify-center">
-        <button id="btn-sw-reset" class="w-full py-3 rounded-2xl bg-mt-red hover:bg-mt-red-light text-white text-lg font-semibold transition-all active:scale-90 shadow-md">Reset</button>
+        <button id="btn-sw-reset" class="w-full py-3 rounded-2xl bg-mt-red hover:bg-mt-red-light text-mt-bg text-lg font-semibold transition-all active:scale-90 shadow-md">Reset</button>
       </div>
     </div>
     <div class="flex items-center justify-between">
       <span class="text-xl font-semibold text-mt-brown">Mambo mode</span>
       <select id="cfg-mode"
-        class="px-4 py-3 rounded-2xl bg-[rgba(181,70,58,0.15)] border-2 border-[rgba(181,70,58,0.2)] text-mt-red text-lg font-semibold focus:outline-none focus:border-mt-red">
+        class="px-4 py-3 rounded-2xl bg-[rgba(212,100,90,0.2)] border-2 border-[rgba(212,100,90,0.25)] text-mt-red text-lg font-semibold focus:outline-none focus:border-mt-red">
         <option value="off">Off</option>
         <option value="uniform">Uniform</option>
         <option value="random" selected>Random</option>
@@ -112,7 +114,7 @@
         <button data-int="300" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">300</button>
         <button data-int="600" class="int-btn py-3 rounded-2xl text-lg font-semibold active:scale-90 shadow-md">600</button>
         <input id="cfg-interval-custom" type="number" min="10" max="600" placeholder="..."
-          class="py-3 rounded-2xl bg-[rgba(181,70,58,0.1)] border-2 border-[rgba(181,70,58,0.2)] text-mt-red text-lg text-center font-semibold focus:outline-none focus:border-mt-red [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+          class="py-3 rounded-2xl bg-[rgba(212,100,90,0.15)] border-2 border-[rgba(212,100,90,0.25)] text-mt-red text-lg text-center font-semibold focus:outline-none focus:border-mt-red [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
       </div>
     </div>
   </div>
@@ -148,6 +150,25 @@ let selectedDuration = 0;
 let selectedInterval = 60;
 let audioUnlocked = false;
 let stopwatchMode = false;
+let wakeLock = null;
+
+// --- Wake Lock ---
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  try { wakeLock = await navigator.wakeLock.request("screen"); }
+  catch { /* user denied or not supported */ }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && running) requestWakeLock();
+});
+
+// --- Audio ---
 
 function unlockAudio() {
   if (audioUnlocked) return;
@@ -250,6 +271,7 @@ function startTimer(durationMin) {
   endTime = Date.now() + durationMin * 60 * 1000;
   running = true;
   paused = false;
+  requestWakeLock();
   scheduleMambos();
   tickTimer();
   startBgTick();
@@ -260,6 +282,7 @@ function pauseTimer() {
     endTime = Date.now() + remainingAtPause;
     running = true;
     paused = false;
+    requestWakeLock();
     scheduleMambos();
     tickTimer();
     startBgTick();
@@ -267,6 +290,7 @@ function pauseTimer() {
     remainingAtPause = endTime - Date.now();
     running = false;
     paused = true;
+    releaseWakeLock();
     clearMambos();
     if (rafId) cancelAnimationFrame(rafId);
   }
@@ -274,6 +298,7 @@ function pauseTimer() {
 
 function resetTimer() {
   stopCommon();
+  releaseWakeLock();
   paused = false;
   selectedDuration = 0;
   highlightDuration(0);
@@ -314,6 +339,7 @@ function startStopwatch() {
   elapsedAtPause = 0;
   running = true;
   paused = false;
+  requestWakeLock();
   scheduleMambosStopwatch();
   tickStopwatch();
   startBgTickStopwatch();
@@ -324,6 +350,7 @@ function pauseStopwatch() {
     startTime = Date.now() - elapsedAtPause;
     running = true;
     paused = false;
+    requestWakeLock();
     scheduleMambosStopwatch();
     tickStopwatch();
     startBgTickStopwatch();
@@ -331,6 +358,7 @@ function pauseStopwatch() {
     elapsedAtPause = Date.now() - startTime;
     running = false;
     paused = true;
+    releaseWakeLock();
     clearMambos();
     if (rafId) cancelAnimationFrame(rafId);
   }
@@ -338,6 +366,7 @@ function pauseStopwatch() {
 
 function resetStopwatch() {
   stopCommon();
+  releaseWakeLock();
   elapsedAtPause = 0;
   paused = false;
   updateDisplay(0);
@@ -435,6 +464,7 @@ function clearMambos() {
 
 function finish() {
   stopCommon();
+  releaseWakeLock();
   audioLong.currentTime = 0;
   audioLong.play().catch(() => {});
 }
@@ -464,6 +494,7 @@ btnModeTimer.addEventListener("click", () => {
     endTime = Date.now() + elapsedMs;
     running = true;
     paused = false;
+    requestWakeLock();
     scheduleMambos();
     tickTimer();
     startBgTick();
@@ -482,6 +513,7 @@ btnModeStopwatch.addEventListener("click", () => {
     elapsedAtPause = 0;
     running = true;
     paused = false;
+    requestWakeLock();
     scheduleMambosStopwatch();
     tickStopwatch();
     startBgTickStopwatch();
