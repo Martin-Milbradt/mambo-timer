@@ -18,7 +18,14 @@
   </div>
 
   <div class="w-full max-w-sm space-y-5 text-base">
-    <div>
+    <div class="flex items-center justify-between">
+      <span class="font-semibold">Mode</span>
+      <div class="flex rounded-xl overflow-hidden border border-zinc-600">
+        <button id="btn-mode-timer" class="px-5 py-3 text-lg font-semibold transition-colors bg-emerald-600">Timer</button>
+        <button id="btn-mode-stopwatch" class="px-5 py-3 text-lg font-semibold transition-colors bg-zinc-800 hover:bg-zinc-700">Stopwatch</button>
+      </div>
+    </div>
+    <div id="timer-controls">
       <div class="mb-2 font-semibold">Duration (min)</div>
       <div id="duration-buttons" class="grid grid-cols-4 gap-2">
         <button data-dur="5" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">5</button>
@@ -30,6 +37,12 @@
         <button data-dur="60" class="dur-btn py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">60</button>
         <input id="cfg-duration-custom" type="number" min="1" max="120" placeholder="..."
           class="py-3 rounded-xl bg-zinc-800 border border-zinc-600 text-lg text-center focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none">
+      </div>
+    </div>
+    <div id="stopwatch-controls" class="hidden">
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-sw-pause" class="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-lg font-semibold transition-colors active:scale-95">Pause</button>
+        <button id="btn-sw-reset" class="py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors active:scale-95">Reset</button>
       </div>
     </div>
     <div class="flex items-center justify-between">
@@ -62,6 +75,12 @@ const $ = (id) => document.getElementById(id);
 const display = $("display");
 const btnMinus = $("btn-minus");
 const btnPlus = $("btn-plus");
+const btnModeTimer = $("btn-mode-timer");
+const btnModeStopwatch = $("btn-mode-stopwatch");
+const timerControls = $("timer-controls");
+const stopwatchControls = $("stopwatch-controls");
+const btnSwPause = $("btn-sw-pause");
+const btnSwReset = $("btn-sw-reset");
 const cfgMode = $("cfg-mode");
 const cfgDurationCustom = $("cfg-duration-custom");
 const cfgIntervalCustom = $("cfg-interval-custom");
@@ -73,12 +92,16 @@ const audioShort = new Audio("public/mambo.mp3");
 const audioLong = new Audio("public/full_mambo.mp3");
 
 let running = false;
+let paused = false;
 let endTime = 0;
+let startTime = 0;
+let elapsedAtPause = 0;
 let rafId = null;
 let mamboTimeouts = [];
 let selectedDuration = 0;
 let selectedInterval = 60;
 let audioUnlocked = false;
+let stopwatchMode = false;
 
 function unlockAudio() {
   if (audioUnlocked) return;
@@ -152,8 +175,24 @@ function highlightInterval(val) {
   }
 }
 
-function tick() {
-  if (!running) return;
+function setModeUI(isStopwatch) {
+  stopwatchMode = isStopwatch;
+  btnModeTimer.classList.toggle("bg-emerald-600", !isStopwatch);
+  btnModeTimer.classList.toggle("bg-zinc-800", isStopwatch);
+  btnModeTimer.classList.toggle("hover:bg-zinc-700", isStopwatch);
+  btnModeStopwatch.classList.toggle("bg-emerald-600", isStopwatch);
+  btnModeStopwatch.classList.toggle("bg-zinc-800", !isStopwatch);
+  btnModeStopwatch.classList.toggle("hover:bg-zinc-700", !isStopwatch);
+  timerControls.classList.toggle("hidden", isStopwatch);
+  stopwatchControls.classList.toggle("hidden", !isStopwatch);
+  btnMinus.classList.toggle("hidden", isStopwatch);
+  btnPlus.classList.toggle("hidden", isStopwatch);
+}
+
+// --- Timer mode ---
+
+function tickTimer() {
+  if (!running || stopwatchMode) return;
   const left = endTime - Date.now();
   if (left <= 0) {
     updateDisplay(0);
@@ -161,7 +200,118 @@ function tick() {
     return;
   }
   updateDisplay(left);
-  rafId = requestAnimationFrame(tick);
+  rafId = requestAnimationFrame(tickTimer);
+}
+
+function startTimer(durationMin) {
+  unlockAudio();
+  selectedDuration = durationMin;
+  highlightDuration(durationMin);
+  saveSettings();
+  stopCommon();
+
+  endTime = Date.now() + durationMin * 60 * 1000;
+  running = true;
+  paused = false;
+  scheduleMambos();
+  tickTimer();
+  startBgTick();
+}
+
+function resetTimer() {
+  stopCommon();
+  selectedDuration = 0;
+  highlightDuration(0);
+  updateDisplay(0);
+}
+
+function adjustTimer(deltaMin) {
+  unlockAudio();
+  if (!running) return;
+  endTime += deltaMin * 60 * 1000;
+  if (endTime <= Date.now()) {
+    updateDisplay(0);
+    finish();
+  } else {
+    scheduleMambos();
+  }
+}
+
+// --- Stopwatch mode ---
+
+function tickStopwatch() {
+  if (!running || !stopwatchMode) return;
+  const elapsed = Date.now() - startTime;
+  updateDisplay(elapsed);
+  rafId = requestAnimationFrame(tickStopwatch);
+}
+
+function startStopwatch() {
+  unlockAudio();
+  stopCommon();
+  startTime = Date.now();
+  elapsedAtPause = 0;
+  running = true;
+  paused = false;
+  btnSwPause.textContent = "Pause";
+  scheduleMambosStopwatch();
+  tickStopwatch();
+  startBgTickStopwatch();
+}
+
+function pauseStopwatch() {
+  if (paused) {
+    // Resume
+    startTime = Date.now() - elapsedAtPause;
+    running = true;
+    paused = false;
+    btnSwPause.textContent = "Pause";
+    scheduleMambosStopwatch();
+    tickStopwatch();
+    startBgTickStopwatch();
+  } else {
+    // Pause
+    elapsedAtPause = Date.now() - startTime;
+    running = false;
+    paused = true;
+    clearMambos();
+    if (rafId) cancelAnimationFrame(rafId);
+    btnSwPause.textContent = "Resume";
+  }
+}
+
+function resetStopwatch() {
+  stopCommon();
+  elapsedAtPause = 0;
+  paused = false;
+  btnSwPause.textContent = "Pause";
+  updateDisplay(0);
+}
+
+// --- Shared ---
+
+function stopCommon() {
+  running = false;
+  clearMambos();
+  if (rafId) cancelAnimationFrame(rafId);
+}
+
+function startBgTick() {
+  setTimeout(function bg() {
+    if (!running || stopwatchMode) return;
+    const left = endTime - Date.now();
+    if (left <= 0) { updateDisplay(0); finish(); return; }
+    updateDisplay(left);
+    setTimeout(bg, 1000);
+  }, 1000);
+}
+
+function startBgTickStopwatch() {
+  setTimeout(function bg() {
+    if (!running || !stopwatchMode) return;
+    updateDisplay(Date.now() - startTime);
+    setTimeout(bg, 1000);
+  }, 1000);
 }
 
 function playMambo() {
@@ -185,7 +335,6 @@ function scheduleMambos() {
       t += intervalMs;
     }
   } else {
-    // Random: exponential sampling (memoryless), mean = intervalSec
     let t = 0;
     while (true) {
       const gap = -intervalSec * 1000 * Math.log(Math.random());
@@ -196,71 +345,79 @@ function scheduleMambos() {
   }
 }
 
+function scheduleMambosStopwatch() {
+  clearMambos();
+  const mode = cfgMode.value;
+  if (mode === "off") return;
+
+  // Schedule a batch, then re-schedule when batch runs out
+  const intervalSec = selectedInterval;
+  const batchDuration = 3600 * 1000; // 1 hour batch
+
+  if (mode === "uniform") {
+    const intervalMs = intervalSec * 1000;
+    let t = intervalMs;
+    while (t < batchDuration) {
+      mamboTimeouts.push(setTimeout(playMambo, t));
+      t += intervalMs;
+    }
+    mamboTimeouts.push(setTimeout(() => { if (running && stopwatchMode) scheduleMambosStopwatch(); }, batchDuration));
+  } else {
+    let t = 0;
+    while (true) {
+      const gap = -intervalSec * 1000 * Math.log(Math.random());
+      t += gap;
+      if (t >= batchDuration) break;
+      mamboTimeouts.push(setTimeout(playMambo, t));
+    }
+    mamboTimeouts.push(setTimeout(() => { if (running && stopwatchMode) scheduleMambosStopwatch(); }, batchDuration));
+  }
+}
+
 function clearMambos() {
   mamboTimeouts.forEach(clearTimeout);
   mamboTimeouts = [];
 }
 
 function finish() {
-  running = false;
-  clearMambos();
-  if (rafId) cancelAnimationFrame(rafId);
+  stopCommon();
   audioLong.currentTime = 0;
   audioLong.play().catch(() => {});
 }
 
-function startTimer(durationMin) {
-  unlockAudio();
-  selectedDuration = durationMin;
-  highlightDuration(durationMin);
-  saveSettings();
-
-  clearMambos();
-  if (rafId) cancelAnimationFrame(rafId);
-
-  endTime = Date.now() + durationMin * 60 * 1000;
-  running = true;
-  scheduleMambos();
-  tick();
-
-  // Backup tick for background tabs
-  setTimeout(function bgTick() {
-    if (!running) return;
-    const left = endTime - Date.now();
-    if (left <= 0) { updateDisplay(0); finish(); return; }
-    updateDisplay(left);
-    setTimeout(bgTick, 1000);
-  }, 1000);
-}
-
-function resetTimer() {
-  running = false;
-  clearMambos();
-  if (rafId) cancelAnimationFrame(rafId);
-  selectedDuration = 0;
-  highlightDuration(0);
-  updateDisplay(0);
-}
-
-function adjustTimer(deltaMin) {
-  unlockAudio();
-  if (!running) return;
-  endTime += deltaMin * 60 * 1000;
-  // Don't let it go below 1 second from now
-  if (endTime <= Date.now()) {
-    updateDisplay(0);
-    finish();
-  } else {
-    scheduleMambos();
-  }
-}
+// --- Event listeners ---
 
 // Display click = reset
-display.addEventListener("click", resetTimer);
+display.addEventListener("click", () => {
+  if (stopwatchMode) resetStopwatch();
+  else resetTimer();
+});
 
-// +/- buttons
+// +/- buttons (timer only)
 btnMinus.addEventListener("click", () => adjustTimer(-1));
 btnPlus.addEventListener("click", () => adjustTimer(1));
+
+// Mode toggle
+btnModeTimer.addEventListener("click", () => {
+  if (!stopwatchMode) return;
+  stopCommon();
+  setModeUI(false);
+  resetTimer();
+});
+
+btnModeStopwatch.addEventListener("click", () => {
+  if (stopwatchMode) return;
+  stopCommon();
+  setModeUI(true);
+  startStopwatch();
+});
+
+// Stopwatch controls
+btnSwPause.addEventListener("click", () => {
+  if (!running && !paused) startStopwatch();
+  else pauseStopwatch();
+});
+btnSwReset.addEventListener("click", resetStopwatch);
 
 // Duration buttons
 document.querySelectorAll(".dur-btn").forEach(btn => {
@@ -279,7 +436,10 @@ document.querySelectorAll(".int-btn").forEach(btn => {
     selectedInterval = Number(btn.dataset.int);
     highlightInterval(selectedInterval);
     saveSettings();
-    if (running) scheduleMambos();
+    if (running) {
+      if (stopwatchMode) scheduleMambosStopwatch();
+      else scheduleMambos();
+    }
   });
 });
 
@@ -290,15 +450,21 @@ cfgIntervalCustom.addEventListener("change", () => {
     selectedInterval = val;
     highlightInterval(val);
     saveSettings();
-    if (running) scheduleMambos();
+    if (running) {
+      if (stopwatchMode) scheduleMambosStopwatch();
+      else scheduleMambos();
+    }
   }
 });
 
-// Mode change reschedules live
+// Mambo mode change reschedules live
 cfgMode.addEventListener("change", () => {
   saveSettings();
   updateIntervalVisibility();
-  if (running) scheduleMambos();
+  if (running) {
+    if (stopwatchMode) scheduleMambosStopwatch();
+    else scheduleMambos();
+  }
 });
 
 loadSettings();
