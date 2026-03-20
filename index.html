@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mambo Timer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { theme: { extend: { fontFamily: { mono: ['"JetBrains Mono"', 'monospace'] } } } }</script>
+</head>
+<body class="bg-zinc-900 text-zinc-100 min-h-screen flex flex-col items-center justify-center p-4 font-mono">
+
+  <h1 class="text-2xl font-bold mb-8 tracking-tight">Mambo Timer</h1>
+
+  <div id="display" class="text-8xl font-bold tabular-nums mb-8 select-none">25:00</div>
+
+  <div class="flex gap-4 mb-10">
+    <button id="btn-start" class="px-6 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-lg font-semibold transition-colors">Start</button>
+    <button id="btn-reset" class="px-6 py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-lg font-semibold transition-colors">Reset</button>
+  </div>
+
+  <div class="w-full max-w-xs space-y-4 text-sm">
+    <label class="flex items-center justify-between">
+      <span>Duration (min)</span>
+      <input id="cfg-duration" type="number" min="1" max="120" value="25"
+        class="w-20 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-right focus:outline-none focus:border-emerald-500">
+    </label>
+    <label class="flex items-center justify-between">
+      <span>Mambo mode</span>
+      <select id="cfg-mode"
+        class="bg-zinc-800 border border-zinc-600 rounded px-2 py-1 focus:outline-none focus:border-emerald-500">
+        <option value="off">Off</option>
+        <option value="uniform">Uniform</option>
+        <option value="random" selected>Random</option>
+      </select>
+    </label>
+    <label id="interval-row" class="flex items-center justify-between">
+      <span>Interval (sec)</span>
+      <input id="cfg-interval" type="number" min="10" max="600" value="240"
+        class="w-20 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-right focus:outline-none focus:border-emerald-500">
+    </label>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const display = $("display");
+const btnStart = $("btn-start");
+const btnReset = $("btn-reset");
+const cfgDuration = $("cfg-duration");
+const cfgMode = $("cfg-mode");
+const cfgInterval = $("cfg-interval");
+const intervalRow = $("interval-row");
+
+const STORAGE_KEY = "mambo-timer-settings";
+
+const audioShort = new Audio("public/mambo.mp3");
+const audioLong = new Audio("public/full_mambo.mp3");
+
+let running = false;
+let endTime = 0;
+let remainingMs = 0;
+let rafId = null;
+let mamboTimeouts = [];
+
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (s) {
+      cfgDuration.value = s.duration ?? 25;
+      cfgMode.value = s.mode ?? "random";
+      cfgInterval.value = s.interval ?? 240;
+    }
+  } catch { /* ignore */ }
+  updateIntervalVisibility();
+  resetTimer();
+}
+
+function saveSettings() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    duration: Number(cfgDuration.value),
+    mode: cfgMode.value,
+    interval: Number(cfgInterval.value),
+  }));
+}
+
+function formatTime(ms) {
+  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function updateDisplay(ms) {
+  display.textContent = formatTime(ms);
+}
+
+function updateIntervalVisibility() {
+  intervalRow.style.display = cfgMode.value === "off" ? "none" : "flex";
+}
+
+function tick() {
+  if (!running) return;
+  const now = Date.now();
+  const left = endTime - now;
+  if (left <= 0) {
+    updateDisplay(0);
+    finish();
+    return;
+  }
+  updateDisplay(left);
+  rafId = requestAnimationFrame(tick);
+}
+
+function playMambo() {
+  audioShort.currentTime = 0;
+  audioShort.play().catch(() => {});
+}
+
+function scheduleMambos() {
+  clearMambos();
+  const mode = cfgMode.value;
+  if (mode === "off") return;
+
+  const intervalSec = Number(cfgInterval.value);
+  const totalMs = endTime - Date.now();
+
+  if (mode === "uniform") {
+    const intervalMs = intervalSec * 1000;
+    let t = intervalMs;
+    while (t < totalMs) {
+      mamboTimeouts.push(setTimeout(playMambo, t));
+      t += intervalMs;
+    }
+  } else {
+    // Random: exponential sampling (memoryless), mean = intervalSec
+    let t = 0;
+    while (true) {
+      const gap = -intervalSec * 1000 * Math.log(Math.random());
+      t += gap;
+      if (t >= totalMs) break;
+      mamboTimeouts.push(setTimeout(playMambo, t));
+    }
+  }
+}
+
+function clearMambos() {
+  mamboTimeouts.forEach(clearTimeout);
+  mamboTimeouts = [];
+}
+
+function finish() {
+  running = false;
+  btnStart.textContent = "Start";
+  clearMambos();
+  if (rafId) cancelAnimationFrame(rafId);
+  audioLong.currentTime = 0;
+  audioLong.play().catch(() => {});
+  setConfigDisabled(false);
+}
+
+function resetTimer() {
+  running = false;
+  btnStart.textContent = "Start";
+  clearMambos();
+  if (rafId) cancelAnimationFrame(rafId);
+  remainingMs = Number(cfgDuration.value) * 60 * 1000;
+  updateDisplay(remainingMs);
+  setConfigDisabled(false);
+}
+
+function setConfigDisabled(disabled) {
+  cfgDuration.disabled = disabled;
+  cfgMode.disabled = disabled;
+  cfgInterval.disabled = disabled;
+}
+
+btnStart.addEventListener("click", () => {
+  // Unlock audio on first user gesture
+  audioShort.play().then(() => audioShort.pause()).catch(() => {});
+  audioLong.play().then(() => audioLong.pause()).catch(() => {});
+
+  if (running) {
+    // Pause
+    running = false;
+    btnStart.textContent = "Start";
+    remainingMs = endTime - Date.now();
+    clearMambos();
+    if (rafId) cancelAnimationFrame(rafId);
+    setConfigDisabled(false);
+  } else {
+    // Start / Resume
+    saveSettings();
+    if (remainingMs <= 0) remainingMs = Number(cfgDuration.value) * 60 * 1000;
+    endTime = Date.now() + remainingMs;
+    running = true;
+    btnStart.textContent = "Pause";
+    setConfigDisabled(true);
+    scheduleMambos();
+    tick();
+    // Backup tick for when tab is in background
+    setTimeout(function bgTick() {
+      if (!running) return;
+      const left = endTime - Date.now();
+      if (left <= 0) { updateDisplay(0); finish(); return; }
+      updateDisplay(left);
+      setTimeout(bgTick, 1000);
+    }, 1000);
+  }
+});
+
+btnReset.addEventListener("click", resetTimer);
+
+cfgDuration.addEventListener("change", () => {
+  saveSettings();
+  if (!running) resetTimer();
+});
+
+cfgMode.addEventListener("change", () => {
+  saveSettings();
+  updateIntervalVisibility();
+});
+
+cfgInterval.addEventListener("change", saveSettings);
+
+loadSettings();
+</script>
+</body>
+</html>
