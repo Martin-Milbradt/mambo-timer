@@ -172,10 +172,12 @@ document.addEventListener("visibilitychange", () => {
 
 function unlockAudio() {
   if (audioUnlocked) return;
-  audioShort.play().then(() => audioShort.pause()).catch(() => {});
-  audioLong.play().then(() => audioLong.pause()).catch(() => {});
-  audioUnlocked = true;
+  audioShort.play().then(() => { audioShort.pause(); audioShort.currentTime = 0; audioUnlocked = true; }).catch(() => {});
+  audioLong.play().then(() => { audioLong.pause(); audioLong.currentTime = 0; }).catch(() => {});
 }
+
+document.addEventListener("click", unlockAudio);
+document.addEventListener("touchstart", unlockAudio);
 
 function loadSettings() {
   try {
@@ -307,6 +309,15 @@ function resetTimer() {
 
 function adjustTimer(deltaMin) {
   unlockAudio();
+  if (!running && !paused && !stopwatchMode && deltaMin > 0) {
+    endTime = Date.now() + deltaMin * 60 * 1000;
+    running = true;
+    requestWakeLock();
+    scheduleMambos();
+    tickTimer();
+    startBgTick();
+    return;
+  }
   if (!running) return;
   if (stopwatchMode) {
     startTime -= deltaMin * 60 * 1000;
