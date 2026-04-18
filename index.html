@@ -94,14 +94,16 @@
         <button id="btn-sw-reset" class="w-full py-3 rounded-2xl bg-mt-red hover:bg-mt-red-light text-mt-bg text-lg font-semibold transition-all active:scale-90 shadow-md">Reset</button>
       </div>
     </div>
-    <div class="flex items-center justify-between">
+    <div class="grid grid-cols-3 items-center gap-2">
       <span class="text-xl font-semibold text-mt-brown">Mambo mode</span>
       <select id="cfg-mode"
-        class="px-4 py-3 rounded-2xl bg-[rgba(212,100,90,0.2)] border-2 border-[rgba(212,100,90,0.25)] text-mt-red text-lg font-semibold focus:outline-none focus:border-mt-red">
+        class="justify-self-center px-4 py-3 rounded-2xl bg-[rgba(212,100,90,0.2)] border-2 border-[rgba(212,100,90,0.25)] text-mt-red text-lg font-semibold focus:outline-none focus:border-mt-red">
         <option value="off">Off</option>
         <option value="uniform">Uniform</option>
         <option value="random" selected>Random</option>
       </select>
+      <button id="btn-test-mambo"
+        class="justify-self-end px-4 py-3 rounded-2xl bg-mt-red hover:bg-mt-red-light text-mt-bg text-lg font-semibold transition-all active:scale-90 shadow-md">Test</button>
     </div>
     <div id="interval-row">
       <div class="mb-2 text-xl font-semibold text-mt-brown">Interval (sec)</div>
@@ -534,6 +536,11 @@ btnModeStopwatch.addEventListener("click", () => {
 });
 
 btnSwReset.addEventListener("click", resetStopwatch);
+
+$("btn-test-mambo").addEventListener("click", () => {
+  unlockAudio();
+  playMambo();
+});
 
 document.querySelectorAll(".dur-btn").forEach(btn => {
   btn.addEventListener("click", () => startTimer(Number(btn.dataset.dur)));
