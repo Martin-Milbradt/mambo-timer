@@ -201,8 +201,8 @@ function saveSettings() {
   }));
 }
 
-function formatTime(ms) {
-  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+function formatTime(ms, roundFn) {
+  const totalSec = Math.max(0, roundFn(ms / 1000));
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
@@ -211,7 +211,9 @@ function formatTime(ms) {
 const digitSpans = display.querySelectorAll(".digit");
 
 function updateDisplay(ms) {
-  const str = formatTime(ms);
+  // Timer counts down (round remaining up); stopwatch counts up (round
+  // elapsed down) so it shows 00:00 until a full second has passed.
+  const str = formatTime(ms, stopwatchMode ? Math.floor : Math.ceil);
   digitSpans[0].textContent = str[0];
   digitSpans[1].textContent = str[1];
   digitSpans[2].textContent = str[3];
