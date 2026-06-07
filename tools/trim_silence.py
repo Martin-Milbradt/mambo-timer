@@ -6,7 +6,7 @@ made the sound play noticeably delayed. This decodes each file, finds the
 real onset, keeps a small lead, and re-encodes to mp3 in place.
 
 Usage:
-    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
     python tools/trim_silence.py
 """
 import os
