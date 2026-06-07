@@ -309,9 +309,14 @@ function resetTimer() {
   updateDisplay(0);
 }
 
-function adjustTimer(deltaMin) {
+function adjust(deltaMin) {
   unlockAudio();
-  if (!running && !paused && !stopwatchMode && deltaMin > 0) {
+  if (stopwatchMode) adjustStopwatch(deltaMin);
+  else adjustTimer(deltaMin);
+}
+
+function adjustTimer(deltaMin) {
+  if (!running && !paused && deltaMin > 0) {
     endTime = Date.now() + deltaMin * 60 * 1000;
     running = true;
     requestWakeLock();
@@ -321,19 +326,30 @@ function adjustTimer(deltaMin) {
     return;
   }
   if (!running) return;
-  if (stopwatchMode) {
-    startTime -= deltaMin * 60 * 1000;
+  endTime += deltaMin * 60 * 1000;
+  if (endTime <= Date.now()) {
+    updateDisplay(0);
+    finish();
+  } else {
+    scheduleMambos();
+  }
+}
+
+function adjustStopwatch(deltaMin) {
+  const deltaMs = deltaMin * 60 * 1000;
+  if (running) {
+    startTime -= deltaMs;
     if (startTime > Date.now()) startTime = Date.now();
     scheduleMambosStopwatch();
-  } else {
-    endTime += deltaMin * 60 * 1000;
-    if (endTime <= Date.now()) {
-      updateDisplay(0);
-      finish();
-    } else {
-      scheduleMambos();
-    }
+    updateDisplay(Date.now() - startTime);
+    return;
   }
+  // Paused or freshly reset: adjust the held time and stay paused.
+  const newElapsed = Math.max(0, elapsedAtPause + deltaMs);
+  if (newElapsed === elapsedAtPause && !paused) return;
+  elapsedAtPause = newElapsed;
+  paused = true;
+  updateDisplay(elapsedAtPause);
 }
 
 // --- Stopwatch mode ---
@@ -493,8 +509,8 @@ display.addEventListener("click", () => {
   }
 });
 
-btnMinus.addEventListener("click", () => adjustTimer(-1));
-btnPlus.addEventListener("click", () => adjustTimer(1));
+btnMinus.addEventListener("click", () => adjust(-1));
+btnPlus.addEventListener("click", () => adjust(1));
 
 btnModeTimer.addEventListener("click", () => {
   if (!stopwatchMode) return;

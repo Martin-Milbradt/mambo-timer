@@ -1,0 +1,6 @@
+# Development-only tooling for processing the mambo audio assets.
+# Not needed to run the app (index.html is a static page) — only to
+# re-trim/re-encode the mp3s in public/ via tools/trim_silence.py.
+numpy==2.4.6
+miniaudio==1.71
+lameenc==1.8.2
